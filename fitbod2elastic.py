@@ -14,8 +14,6 @@ from dateutil import parser
 from elasticsearch import Elasticsearch
 import gmail_api
 
-logging.basicConfig(level=logging.INFO)
-
 def get_attachments(query, tgt_dir, delete_msg=False):
     """Returns a list of attachments that match the query. Saves files to tgt_dir.
 
@@ -26,6 +24,8 @@ def get_attachments(query, tgt_dir, delete_msg=False):
     service = gmail_api.GetService('credentials.json')
     # Call the Gmail API
     filtered_msgs = gmail_api.ListMessagesMatchingQuery(service, 'me', query)
+    print("%s attachment(s) found from GMail and saved to disk."
+          %(len(filtered_msgs), ))
     logging.debug(filtered_msgs)
 
     attachments = []
@@ -33,7 +33,6 @@ def get_attachments(query, tgt_dir, delete_msg=False):
         attachments.extend(gmail_api.GetAttachments(service, 'me', msg["id"], tgt_dir))
         if delete_msg:
             gmail_api.TrashMessage(service, 'me', msg["id"])
-    logging.info("%s attachment(s) found and saved to disk." %(len(filtered_msgs), ))
     return attachments
 
 
@@ -107,7 +106,12 @@ def main():
     parser.add_argument('-d', '--days',
                         help="number of days to index starting from today",
                         type=int, default=7)
+    parser.add_argument('-v', '--verbose',
+                        help="verbose logging",
+                        action="store_true")
     args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO)
 
     attachments = get_attachments(FITBOD_MSG_QUERY, TMP_DIR, delete_msg=True)
 
@@ -124,13 +128,14 @@ def main():
         # The assumption is that old workout data will not be modified.
         # If the history changes, re-index everything with nr_of_days=0
         workout_data = csv_to_workout_obj(att, nr_of_days=args.days)
+        print("Indexing %s workout sets" %(len(workout_data), ))
         for workout_set in workout_data:
             index_to_es(es, ES_INDEX, ES_DOC_TYPE, workout_set,
                         workout_set["id"])
-
     #Cleanup
     for att in attachments:
+        logging.info("Removing %s from disk" %(att, ))
         os.unlink(att)
-
+    print("Done!")
 
 main()

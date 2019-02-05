@@ -31,6 +31,7 @@ def GetService(creds_file):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
+    print("Logging in to GMail")
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
@@ -46,9 +47,9 @@ def GetService(creds_file):
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     service = build('gmail', 'v1', credentials=creds)
-    
+    print("Logged in!")
     return service
-            
+
 def ListMessagesMatchingQuery(service, user_id, query=''):
     """List all Messages of the user's mailbox matching the query.
 
