@@ -47,7 +47,8 @@ def index_to_es(es, index, doc_type, body, doc_id):
 
     ret = es.index(index=index, doc_type=doc_type, body=body, id=doc_id)
     if ret["result"] != "created" and ret["result"] != "updated":
-        logging.error("Indexing returned %s, expected 'created' or 'updated'" %(ret["result"]))
+        logging.error("Indexing returned %s, expected 'created' or 'updated'"
+                      %(ret["result"]))
 
 def csv_to_workout_obj(csv_file, nr_of_days):
     """A CSV is converted to a list of dictionairies."""
@@ -76,8 +77,12 @@ def csv_to_workout_obj(csv_file, nr_of_days):
                 formatted_row = {}
                 for field in row.items():
                     formatted_row[field[0]] = to_float(field[1])
+                # Add a calculated volume field
+                formatted_row["volume"] = formatted_row["weight"] * \
+                    formatted_row["reps"]
                 obj.append(formatted_row)
-    logging.info("Found %s sets within the past %s days" %(len(obj), nr_of_days, ))
+    logging.info("Found %s sets within the past %s days"
+                 %(len(obj), nr_of_days, ))
     return obj
 
 def to_float(my_data):
@@ -94,7 +99,7 @@ def main():
     ES_DOC_TYPE = "set"
     TMP_DIR = os.path.join(os.sep, "tmp", "fitbod2elastic")
     parser = argparse.ArgumentParser(\
-        description='Get Fitbod CSV from GMail and index it in Elasticsearch.')
+        description='Get Fitbod CSV from GMail and index it in Elasticsearch')
     parser.add_argument('-d', '--days',
                         help="number of days to index starting from today",
                         type=int, default=7)
@@ -107,7 +112,7 @@ def main():
     for att in attachments:
         logging.info("Indexing %s" %(att, ))
         if not att.endswith(".csv"):
-            logging.warning("...skipping due to unknown file type. Expecting CSV.")
+            logging.warning("...skipped. Unknown file type. Expecting CSV.")
             continue
 
         # We can't distinguish similar sets performed on the same day.
@@ -116,7 +121,8 @@ def main():
         # If the history changes, re-index everything with nr_of_days=0
         workout_data = csv_to_workout_obj(att, nr_of_days=args.days)
         for workout_set in workout_data:
-            index_to_es(es, ES_INDEX, ES_DOC_TYPE, workout_set, workout_set["id"])
+            index_to_es(es, ES_INDEX, ES_DOC_TYPE, workout_set,
+                        workout_set["id"])
 
     #Cleanup
     for att in attachments:
