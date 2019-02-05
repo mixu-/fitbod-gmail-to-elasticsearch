@@ -13,3 +13,14 @@ Get the CSV file that Fitbod can export via GMail API and index the data in elas
     https://developers.google.com/gmail/api/quickstart/python
 * Download the credentials.json from the above link.
 * Currently the initial authentication process requires you to login via a web browser, so the script will not work on a headless server.
+
+## Usage
+
+    $ python fitbod2elastic.py
+
+    Get Fitbod CSV from GMail and index it in Elasticsearch
+
+    optional arguments:
+        -h, --help            show this help message and exit  
+        -d DAYS, --days DAYS  number of days to index starting from today
+        -v, --verbose         verbose logging
