@@ -23,7 +23,7 @@ from google.auth.transport.requests import Request
 from apiclient import errors
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 def GetService(creds_file):
     """Authorize with credentials in creds_file"""
@@ -113,3 +113,18 @@ def GetAttachments(service, user_id, msg_id, store_dir):
             f.close()
 
     return attachments
+
+def TrashMessage(service, user_id, msg_id):
+    """Trash a Message.
+
+    Args:
+      service: Authorized Gmail API service instance.
+      user_id: User's email address. The special value "me"
+      can be used to indicate the authenticated user.
+      msg_id: ID of Message to trash.
+    """
+    try:
+        service.users().messages().trash(userId=user_id, id=msg_id).execute()
+        print 'Message with id: %s trashed successfully.' % msg_id
+    except errors.HttpError, error:
+        print 'An error occurred: %s' % error

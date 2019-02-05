@@ -16,10 +16,11 @@ import gmail_api
 
 logging.basicConfig(level=logging.INFO)
 
-def get_attachments(query, tgt_dir):
+def get_attachments(query, tgt_dir, delete_msg=False):
     """Returns a list of attachments that match the query. Saves files to tgt_dir.
 
     Will overwrite files if they already exist.
+    Set delete_msg=True to remove the message after downloading the attachment.
     """
 
     service = gmail_api.GetService('credentials.json')
@@ -30,6 +31,8 @@ def get_attachments(query, tgt_dir):
     attachments = []
     for msg in filtered_msgs:
         attachments.extend(gmail_api.GetAttachments(service, 'me', msg["id"], tgt_dir))
+        if delete_msg:
+            gmail_api.TrashMessage(service, 'me', msg["id"])
     logging.info("%s attachment(s) found and saved to disk." %(len(filtered_msgs), ))
     return attachments
 
@@ -97,6 +100,7 @@ def to_float(my_data):
 def main():
     ES_INDEX = "fitbod-workouts"
     ES_DOC_TYPE = "set"
+    FITBOD_MSG_QUERY = "fitbod workout data export has:attachment"
     TMP_DIR = os.path.join(os.sep, "tmp", "fitbod2elastic")
     parser = argparse.ArgumentParser(\
         description='Get Fitbod CSV from GMail and index it in Elasticsearch')
@@ -105,7 +109,7 @@ def main():
                         type=int, default=7)
     args = parser.parse_args()
 
-    attachments = get_attachments('fitbod', TMP_DIR)
+    attachments = get_attachments(FITBOD_MSG_QUERY, TMP_DIR, delete_msg=True)
 
     es = Elasticsearch([{'host': '127.0.0.1', 'port': 9201}])
 
